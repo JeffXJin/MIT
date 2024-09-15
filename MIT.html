@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous" />
+    <link rel="shortcut icon" href="/public/favicon.ico" />
+    <title>Meridian Insurance</title>
+  </head>
+  <body>
+    <div id="root">
+      <div>
+        <div class="mb-3">
+          <label for="formFile" class="form-label">Default file input example</label>
+          <input class="form-control" type="file" id="formFile" />
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="//mozilla.github.io/pdf.js/build/pdf.mjs" type="module"></script>
+
+  <script type="module">
+    // If absolute URL from the remote server is provided, configure the CORS
+    // header on that server.
+    //   var url = "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf";
+
+    // Loaded via <script> tag, create shortcut to access PDF.js exports.
+    var { pdfjsLib } = globalThis;
+
+    // The workerSrc property shall be specified.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "//mozilla.github.io/pdf.js/build/pdf.worker.mjs";
+
+    function extractText(pdfUrl) {
+      var pdf = pdfjsLib.getDocument(pdfUrl);
+      return pdf.promise.then(function (pdf) {
+        var totalPageCount = pdf.numPages;
+        var countPromises = [];
+        for (var currentPage = 1; currentPage <= totalPageCount; currentPage++) {
+          var page = pdf.getPage(currentPage);
+          countPromises.push(
+            page.then(function (page) {
+              // Raw conversion, no newline formatting
+              /*    var textContent = page.getTextContent();
+              return textContent.then(function (text) {
+                return text.items
+                  .map(function (s) {
+                    return s.str;
+                  })
+                  .join("");
+              }); */
+
+              var textContent = page.getTextContent().then(function (textContent) {
+                var textItems = textContent.items;
+                var finalString = "";
+                var line = 0;
+
+                // Concatenate the string of the item to the final string
+                for (var i = 0; i < textItems.length; i++) {
+                  if (line != textItems[i].transform[5]) {
+                    if (line != 0) {
+                      finalString += "\r\n";
+                    }
+
+                    line = textItems[i].transform[5];
+                  }
+                  var item = textItems[i];
+
+                  finalString += item.str;
+                }
+                console.log(finalString);
+                return finalString;
+              });
+            })
+          );
+        }
+
+        return Promise.all(countPromises).then(function (texts) {
+          return texts.join("");
+        });
+      });
+    }
+
+    // Test on URL
+    /*     const url = "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf";
+
+    extractText(url).then(
+      function (text) {
+        console.log("parse " + text);
+      },
+      function (reason) {
+        console.error(reason);
+      }
+    ); */
+
+    const fileInput = document.getElementById("formFile");
+    fileInput.onchange = () => {
+      var selectedFile = fileInput.files[0];
+      console.log(selectedFile);
+      selectedFile = URL.createObjectURL(selectedFile);
+      extractText(selectedFile).then(
+        function (text) {
+          console.log("parse " + text);
+        },
+        function (reason) {
+          console.error(reason);
+        }
+      );
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://unpkg.com/imask"></script>
+</html>
